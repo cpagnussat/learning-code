@@ -1,3 +1,4 @@
+// Simple Node.js server for learning
 const http = require('http');
 
 let storedData = [];
