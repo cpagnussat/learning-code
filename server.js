@@ -1,4 +1,5 @@
 // Simple Node.js server for learning
+// Built during daily coding sessions
 const http = require('http');
 
 let storedData = [];
