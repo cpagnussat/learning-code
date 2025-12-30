@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Learning API</title>
+</head>
+<body>
+  <h1>Submit Data</h1>
+  
+  <form id="dataForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="text" id="skill" placeholder="Skill" required>
+    <button type="submit">Submit</button>
+  </form>
+  
+  <h2>Stored Data:</h2>
+  <div id="output"></div>
+  
+  <script>
+  const form = document.getElementById('dataForm');
+  const output = document.getElementById('output');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value;
+    const skill = document.getElementById('skill').value;
+    
+    const response = await fetch('/data', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, skill})
+    });
+    
+    const result = await response.json();
+    console.log('Server response:', result);
+    
+    loadData();
+    form.reset();
+  });
+  
+  async function loadData() {
+    const response = await fetch('/data');
+    const data = await response.json();
+    
+    output.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  }
+  
+  loadData();
+</script>
+</body>
+</html>
