@@ -11,7 +11,15 @@
     <input type="text" id="skill" placeholder="Skill" required>
     <button type="submit">Submit</button>
   </form>
-  
+
+
+  <hr>
+
+  <h2>External API Demo</h2>
+  <button id="loadUsers">Load Users from API</button>
+  <div id="users"></div>
+
+
   <h2>Stored Data:</h2>
   <div id="output"></div>
   
@@ -38,6 +46,8 @@
     form.reset();
   });
   
+  
+
   async function loadData() {
     const response = await fetch('/data');
     const data = await response.json();
@@ -46,6 +56,18 @@
   }
   
   loadData();
+
+  document.getElementById('loadUsers').addEventListener('click', async () => {
+  const response = await fetch('/users');
+  const users = await response.json();
+  
+  const usersDiv = document.getElementById('users');
+  usersDiv.innerHTML = '<h3>Users:</h3>';
+  
+  users.forEach(user => {
+    usersDiv.innerHTML += `<p>${user.name} - ${user.email}</p>`;
+  });
+});
 </script>
 </body>
 </html>

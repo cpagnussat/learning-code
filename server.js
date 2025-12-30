@@ -1,74 +1,50 @@
-// Simple Node.js server for learning
-// Built during daily coding sessions
-const http = require('http');
-
-let storedData = [];
-
+// Server built with Express framework
+const express = require('express');
 const fs = require('fs');
 
+const app = express();
 const dataFile = 'data.json';
 
-// Load data from file on startup
+// Load existing data
+let storedData = [];
 if (fs.existsSync(dataFile)) {
   const fileData = fs.readFileSync(dataFile, 'utf8');
   storedData = JSON.parse(fileData);
-  console.log('Loaded existing data:', storedData);
 }
 
 function saveData() {
   fs.writeFileSync(dataFile, JSON.stringify(storedData, null, 2));
 }
 
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-const server = http.createServer((request, response) => {
-  console.log('Request received for:', request.url);
-  
-  if (request.url === '/') {
-  fs.readFile('index.html', (err, data) => {
-    if (err) {
-      response.writeHead(500, {'Content-Type': 'text/plain'});
-      response.end('Error loading page');
-    } else {
-      response.writeHead(200, {'Content-Type': 'text/html'});
-      response.end(data);
-    }
-  });
-    
-  } else if (request.url === '/about') {
-    response.writeHead(200, {'Content-Type': 'application/json'});
-    response.end(JSON.stringify({message: 'This is the about page', version: 1}));
-    
-  } else if (request.url === '/data' && request.method === 'POST') {
-  let body = '';
-  
-  request.on('data', chunk => {
-    body += chunk;
-  });
-  
-  request.on('end', () => {
-    try {
-      const data = JSON.parse(body);
-      storedData.push(data);
-      saveData();
-      
-      response.writeHead(200, {'Content-Type': 'application/json'});
-      response.end(JSON.stringify({success: true, stored: storedData}));
-    } catch (error) {
-      response.writeHead(400, {'Content-Type': 'application/json'});
-      response.end(JSON.stringify({error: 'Invalid JSON'}));
-    }
-  });
-    
-  } else if (request.url === '/data' && request.method === 'GET') {
-    response.writeHead(200, {'Content-Type': 'application/json'});
-    response.end(JSON.stringify(storedData));
-    
-  } else {
-    response.writeHead(404, {'Content-Type': 'text/plain'});
-    response.end('Page not found');
+// Serve static files (HTML)
+app.use(express.static('.'));
+
+// GET /data - return all stored data
+app.get('/data', (req, res) => {
+  res.json(storedData);
+});
+
+// POST /data - add new data
+app.post('/data', (req, res) => {
+  storedData.push(req.body);
+  saveData();
+  res.json({success: true, stored: storedData});
+});
+
+// GET /users - fetch users from external API
+app.get('/users', async (req, res) => {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/users');
+    const users = await response.json();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({error: 'Failed to fetch users'});
   }
 });
 
-server.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
+app.listen(3000, () => {
+  console.log('Express server running on http://localhost:3000');
 });
