@@ -1,20 +1,19 @@
-// Server built with Express framework
+// Server built with Express framework and SQLite database
 const express = require('express');
-const fs = require('fs');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const dataFile = 'data.json';
+const db = new sqlite3.Database('mydata.db');
 
-// Load existing data
-let storedData = [];
-if (fs.existsSync(dataFile)) {
-  const fileData = fs.readFileSync(dataFile, 'utf8');
-  storedData = JSON.parse(fileData);
-}
-
-function saveData() {
-  fs.writeFileSync(dataFile, JSON.stringify(storedData, null, 2));
-}
+// Create table if it doesn't exist
+db.run(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    skill TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -24,14 +23,26 @@ app.use(express.static('.'));
 
 // GET /data - return all stored data
 app.get('/data', (req, res) => {
-  res.json(storedData);
+  db.all(`SELECT * FROM users`, [], (err, rows) => {
+    if (err) {
+      res.status(500).json({error: err.message});
+    } else {
+      res.json(rows);
+    }
+  });
 });
 
 // POST /data - add new data
 app.post('/data', (req, res) => {
-  storedData.push(req.body);
-  saveData();
-  res.json({success: true, stored: storedData});
+  const {name, skill} = req.body;
+  
+  db.run(`INSERT INTO users (name, skill) VALUES (?, ?)`, [name, skill], function(err) {
+    if (err) {
+      res.status(500).json({error: err.message});
+    } else {
+      res.json({success: true, id: this.lastID});
+    }
+  });
 });
 
 // GET /users - fetch users from external API
